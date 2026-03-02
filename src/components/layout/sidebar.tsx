@@ -18,6 +18,15 @@ import {
   Shapes,
   KeyRound,
   Cloud,
+  BarChart3,
+  Globe,
+  BookOpen,
+  Hash,
+  FileText,
+  ScanSearch,
+  ShieldCheck,
+  HeartPulse,
+  ClipboardList,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -37,6 +46,15 @@ const navItems = [
   { href: "/patterns", label: "Patterns", icon: Shapes },
   { href: "/credentials", label: "Credentials", icon: KeyRound },
   { href: "/cloud-connector", label: "Cloud Connector", icon: Cloud },
+  { href: "/adapter-census", label: "Adapter Census", icon: BarChart3 },
+  { href: "/external-systems", label: "External Systems", icon: Globe },
+  { href: "/pattern-cataloger", label: "Pattern Catalog", icon: BookOpen },
+  { href: "/number-ranges", label: "Number Ranges", icon: Hash },
+  { href: "/req-docgen", label: "Req Doc Gen", icon: FileText },
+  { href: "/param-auditor", label: "Param Auditor", icon: ScanSearch },
+  { href: "/cert-expiry", label: "Cert Monitor", icon: ShieldCheck },
+  { href: "/health-check", label: "Health Check", icon: HeartPulse },
+  { href: "/runbook", label: "Runbook", icon: ClipboardList },
 ];
 
 interface SidebarProps {

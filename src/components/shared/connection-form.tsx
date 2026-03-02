@@ -1,19 +1,65 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useConnectionStore } from "@/stores/connection-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plug, Check, AlertCircle } from "lucide-react";
+import { Loader2, Plug, Check, AlertCircle, Save, Upload } from "lucide-react";
 import { toast } from "sonner";
+import type { ConnectionConfig } from "@/types/cpi";
 
 export function ConnectionForm() {
   const { config, isConnected, isConnecting, setConfig, setConnected, setConnecting, setError } =
     useConnectionStore();
   const [showSecrets, setShowSecrets] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSaveCredentials = useCallback(() => {
+    const payload = JSON.stringify(config, null, 2);
+    const blob = new Blob([payload], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "cpi-credentials.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Credentials saved to file");
+  }, [config]);
+
+  const handleLoadCredentials = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const loaded = JSON.parse(text) as Partial<ConnectionConfig>;
+        if (!loaded.tenantUrl) {
+          throw new Error("Invalid credentials file: missing tenantUrl");
+        }
+        setConfig({
+          tenantUrl: loaded.tenantUrl ?? "",
+          authType: loaded.authType ?? "oauth2",
+          oauthTokenUrl: loaded.oauthTokenUrl ?? "",
+          oauthClientId: loaded.oauthClientId ?? "",
+          oauthClientSecret: loaded.oauthClientSecret ?? "",
+          basicUsername: loaded.basicUsername ?? "",
+          basicPassword: loaded.basicPassword ?? "",
+        });
+        setConnected(false);
+        toast.success(`Loaded credentials from ${file.name}`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Failed to parse credentials file";
+        toast.error(msg);
+      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    },
+    [setConfig, setConnected]
+  );
 
   const handleTestConnection = async () => {
     setConnecting(true);
@@ -132,7 +178,7 @@ export function ConnectionForm() {
           </div>
         )}
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2">
           <Button onClick={handleTestConnection} disabled={isConnecting || !config.tenantUrl}>
             {isConnecting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -146,6 +192,17 @@ export function ConnectionForm() {
           <Button variant="ghost" size="sm" onClick={() => setShowSecrets(!showSecrets)}>
             {showSecrets ? "Hide" : "Show"} secrets
           </Button>
+          <div className="flex items-center gap-2 ml-auto">
+            <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleLoadCredentials} />
+            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="h-3.5 w-3.5" />
+              Load
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSaveCredentials} disabled={!config.tenantUrl}>
+              <Save className="h-3.5 w-3.5" />
+              Save
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
