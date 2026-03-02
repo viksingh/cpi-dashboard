@@ -13,6 +13,11 @@ import {
   AlertTriangle,
   List,
   X,
+  Workflow,
+  CalendarCheck,
+  Shapes,
+  KeyRound,
+  Cloud,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -27,6 +32,11 @@ const navItems = [
   { href: "/endpoints", label: "Endpoints", icon: MapPin },
   { href: "/tech-debt", label: "Tech Debt", icon: AlertTriangle },
   { href: "/inventory", label: "Inventory", icon: List },
+  { href: "/normalized-flows", label: "Flow Chains", icon: Workflow },
+  { href: "/cutover", label: "Cutover Plan", icon: CalendarCheck },
+  { href: "/patterns", label: "Patterns", icon: Shapes },
+  { href: "/credentials", label: "Credentials", icon: KeyRound },
+  { href: "/cloud-connector", label: "Cloud Connector", icon: Cloud },
 ];
 
 interface SidebarProps {

@@ -4,3 +4,8 @@ export * from './dependency';
 export * from './tech-debt';
 export * from './endpoint';
 export * from './interface-inventory';
+export * from './normalized-flow';
+export * from './cutover';
+export * from './pattern';
+export * from './credential';
+export * from './cloud-connector';

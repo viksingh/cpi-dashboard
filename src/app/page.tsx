@@ -11,6 +11,11 @@ import {
   AlertTriangle,
   List,
   ArrowRight,
+  Workflow,
+  CalendarCheck,
+  Shapes,
+  KeyRound,
+  Cloud,
 } from "lucide-react";
 
 const tools = [
@@ -62,6 +67,41 @@ const tools = [
     description: "Map Source System → iFlow → Target System with protocol grouping and ECC classification",
     icon: List,
     color: "text-teal-500",
+  },
+  {
+    href: "/normalized-flows",
+    title: "Flow Chain Mapper",
+    description: "Concatenate JMS/ProcessDirect-chained iFlows into end-to-end logical flows for migration analysis",
+    icon: Workflow,
+    color: "text-violet-500",
+  },
+  {
+    href: "/cutover",
+    title: "Cutover Plan Generator",
+    description: "Auto-generate sequenced migration waves from dependency graph and ECC endpoint analysis",
+    icon: CalendarCheck,
+    color: "text-lime-500",
+  },
+  {
+    href: "/patterns",
+    title: "Pattern Classifier",
+    description: "Classify iFlows by integration pattern: sync, async, store-forward, polling, batch, and more",
+    icon: Shapes,
+    color: "text-pink-500",
+  },
+  {
+    href: "/credentials",
+    title: "Credential Auditor",
+    description: "Inventory all security artifacts: user credentials, OAuth2 clients, keystores, and secure parameters",
+    icon: KeyRound,
+    color: "text-amber-500",
+  },
+  {
+    href: "/cloud-connector",
+    title: "Cloud Connector Mapper",
+    description: "Map all on-premise virtual hosts and routes for S/4HANA cutover planning",
+    icon: Cloud,
+    color: "text-sky-500",
   },
 ];
 
