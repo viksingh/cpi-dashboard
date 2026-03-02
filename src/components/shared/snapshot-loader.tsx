@@ -35,6 +35,21 @@ export function SnapshotLoader({ onLoad, label = "Load Snapshot" }: SnapshotLoad
 
         onLoad(data, file.name);
         toast.success(`Loaded snapshot: ${file.name}`);
+
+        // Warn if no flows have parsed bundle data
+        const totalFlows = data.allFlows?.length ?? 0;
+        const parsedBundles = data.allFlows?.filter((f) => f.bundleParsed && f.iflowContent).length ?? 0;
+        if (totalFlows > 0 && parsedBundles === 0) {
+          toast.warning(
+            "Snapshot has no iFlow bundle data. Analysis tools need bundles to work. Re-extract with \"iFlow Bundles\" enabled.",
+            { duration: 8000 }
+          );
+        } else if (totalFlows > 0 && parsedBundles < totalFlows) {
+          toast.info(
+            `${parsedBundles}/${totalFlows} flows have bundle data. Some analysis results may be incomplete.`,
+            { duration: 5000 }
+          );
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Failed to parse snapshot";
         toast.error(msg);

@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { useConnectionStore } from "@/stores/connection-store";
 import { useExtractionStore } from "@/stores/extraction-store";
-import type { ConnectionConfig, IntegrationPackage, IntegrationFlow, ValueMapping, RuntimeArtifact, Configuration } from "@/types/cpi";
+import type { ConnectionConfig, IntegrationPackage, IntegrationFlow, IFlowContent, ValueMapping, RuntimeArtifact, Configuration } from "@/types/cpi";
 
 async function apiPost<T>(url: string, body: unknown): Promise<T> {
   const resp = await fetch(url, {
@@ -32,6 +32,7 @@ export function useCpiExtract() {
     addValueMappings,
     setRuntimeArtifacts,
     updateFlowConfigurations,
+    updateFlowBundle,
   } = useExtractionStore();
 
   const extract = useCallback(async () => {
@@ -129,6 +130,32 @@ export function useCpiExtract() {
         addLog(`Found ${runtimeArtifacts.length} runtime artifacts`);
       }
 
+      // Step 6: Download & parse iFlow bundles
+      if (options.extractIflowBundles) {
+        const currentResult = useExtractionStore.getState().result;
+        const allFlows = currentResult?.allFlows ?? [];
+        addLog(`Downloading iFlow bundles for ${allFlows.length} flows...`);
+        let parsed = 0;
+        let failed = 0;
+
+        for (let i = 0; i < allFlows.length; i++) {
+          const flow = allFlows[i];
+          setProgress(`Parsing bundle ${i + 1}/${allFlows.length}: ${flow.name}`);
+          try {
+            const { iflowContent } = await apiPost<{ iflowContent: IFlowContent }>(
+              "/api/extract/bundle",
+              { config, flowId: flow.id, flowVersion: flow.version }
+            );
+            updateFlowBundle(flow.id, iflowContent);
+            parsed++;
+          } catch {
+            updateFlowBundle(flow.id, undefined);
+            failed++;
+          }
+        }
+        addLog(`Bundle parsing complete: ${parsed} parsed, ${failed} failed`);
+      }
+
       setProgress("Extraction complete!");
       addLog("Extraction complete.");
     } catch (err) {
@@ -138,7 +165,7 @@ export function useCpiExtract() {
     } finally {
       setExtracting(false);
     }
-  }, [config, options, setResult, setExtracting, setProgress, addLog, clearLogs, addPackages, addFlows, addValueMappings, setRuntimeArtifacts, updateFlowConfigurations]);
+  }, [config, options, setResult, setExtracting, setProgress, addLog, clearLogs, addPackages, addFlows, addValueMappings, setRuntimeArtifacts, updateFlowConfigurations, updateFlowBundle]);
 
   return { extract };
 }

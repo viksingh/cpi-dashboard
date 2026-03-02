@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Camera, Download, Loader2, Save, Upload, Package, Workflow, Activity, Database } from "lucide-react";
+import { BundleWarning } from "@/components/shared/bundle-warning";
 import { exportJson } from "@/exporters/json-exporter";
 import type { ExtractionResult } from "@/types/cpi";
 
@@ -71,6 +72,8 @@ export default function SnapshotPage() {
       </Card>
 
       <LogPanel logs={logs} />
+
+      {result && <BundleWarning result={result} />}
 
       {result && (
         <Card>

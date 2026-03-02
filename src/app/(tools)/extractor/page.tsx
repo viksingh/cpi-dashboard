@@ -161,6 +161,7 @@ export default function ExtractorPage() {
               { key: "extractValueMappings" as const, label: "Value Mappings" },
               { key: "extractConfigurations" as const, label: "Configurations" },
               { key: "extractRuntime" as const, label: "Runtime Status" },
+              { key: "extractIflowBundles" as const, label: "iFlow Bundles (deep analysis)" },
             ].map(({ key, label }) => (
               <div key={key} className="flex items-center gap-2">
                 <Checkbox

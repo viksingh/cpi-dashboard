@@ -38,7 +38,7 @@ const defaultOptions: ExtractionOptions = {
   extractValueMappings: true,
   extractConfigurations: true,
   extractRuntime: true,
-  extractIflowBundles: false,
+  extractIflowBundles: true,
   dateFilterEnabled: false,
   sinceDate: null,
   dateFilterMode: 'MODIFIED_SINCE' as FilterMode,
