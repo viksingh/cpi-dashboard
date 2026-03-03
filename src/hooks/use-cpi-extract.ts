@@ -33,6 +33,7 @@ export function useCpiExtract() {
     setRuntimeArtifacts,
     updateFlowConfigurations,
     updateFlowBundle,
+    setSnapshotMeta,
   } = useExtractionStore();
 
   const extract = useCallback(async () => {
@@ -167,5 +168,101 @@ export function useCpiExtract() {
     }
   }, [config, options, setResult, setExtracting, setProgress, addLog, clearLogs, addPackages, addFlows, addValueMappings, setRuntimeArtifacts, updateFlowConfigurations, updateFlowBundle]);
 
-  return { extract };
+  /**
+   * Refresh the currently loaded snapshot by fetching missing data from the CPI API.
+   * - Fetches bundles for flows missing iflowContent
+   * - Refreshes runtime status
+   * - Fetches configurations for flows missing them
+   */
+  const refresh = useCallback(async () => {
+    const currentResult = useExtractionStore.getState().result;
+    if (!currentResult) return;
+
+    setExtracting(true);
+    clearLogs();
+    addLog("Refreshing snapshot from CPI API...");
+
+    try {
+      const allFlows = currentResult.allFlows;
+
+      // Refresh runtime status
+      addLog("Refreshing runtime status...");
+      setProgress("Fetching runtime status...");
+      try {
+        const { runtimeArtifacts } = await apiPost<{ runtimeArtifacts: RuntimeArtifact[] }>(
+          "/api/extract/runtime",
+          { config }
+        );
+        setRuntimeArtifacts(runtimeArtifacts);
+        addLog(`Runtime: ${runtimeArtifacts.length} artifacts`);
+      } catch (err) {
+        addLog(`Runtime refresh failed: ${err instanceof Error ? err.message : err}`);
+      }
+
+      // Fetch configurations for flows missing them
+      const flowsMissingConfigs = allFlows.filter(
+        (f) => !f.configurations || f.configurations.length === 0
+      );
+      if (flowsMissingConfigs.length > 0) {
+        addLog(`Fetching configurations for ${flowsMissingConfigs.length} flows...`);
+        let configCount = 0;
+        for (let i = 0; i < flowsMissingConfigs.length; i++) {
+          const flow = flowsMissingConfigs[i];
+          setProgress(`Configurations ${i + 1}/${flowsMissingConfigs.length}: ${flow.name}`);
+          try {
+            const { configurations } = await apiPost<{ configurations: Configuration[] }>(
+              "/api/extract/configurations",
+              { config, flowId: flow.id, flowVersion: flow.version }
+            );
+            if (configurations.length > 0) {
+              updateFlowConfigurations(flow.id, configurations);
+              configCount += configurations.length;
+            }
+          } catch {
+            // Non-critical
+          }
+        }
+        addLog(`Configurations: ${configCount} parameters fetched`);
+      }
+
+      // Fetch bundles for flows missing iflowContent
+      const flowsMissingBundles = allFlows.filter((f) => !f.iflowContent);
+      if (flowsMissingBundles.length > 0) {
+        addLog(`Downloading bundles for ${flowsMissingBundles.length} flows (${allFlows.length - flowsMissingBundles.length} already have bundles)...`);
+        let parsed = 0;
+        let failed = 0;
+
+        for (let i = 0; i < flowsMissingBundles.length; i++) {
+          const flow = flowsMissingBundles[i];
+          setProgress(`Parsing bundle ${i + 1}/${flowsMissingBundles.length}: ${flow.name}`);
+          try {
+            const { iflowContent } = await apiPost<{ iflowContent: IFlowContent }>(
+              "/api/extract/bundle",
+              { config, flowId: flow.id, flowVersion: flow.version }
+            );
+            updateFlowBundle(flow.id, iflowContent);
+            parsed++;
+          } catch {
+            updateFlowBundle(flow.id, undefined);
+            failed++;
+          }
+        }
+        addLog(`Bundles: ${parsed} parsed, ${failed} failed`);
+      } else {
+        addLog("All flows already have bundle data.");
+      }
+
+      setSnapshotMeta("Refreshed snapshot");
+      setProgress("Refresh complete!");
+      addLog("Refresh complete.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Refresh failed";
+      addLog(`ERROR: ${msg}`);
+      setProgress(`Error: ${msg}`);
+    } finally {
+      setExtracting(false);
+    }
+  }, [config, setExtracting, clearLogs, addLog, setProgress, setRuntimeArtifacts, updateFlowConfigurations, updateFlowBundle, setSnapshotMeta]);
+
+  return { extract, refresh };
 }

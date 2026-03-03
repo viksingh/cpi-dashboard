@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Loader2, Package, Workflow, Database, Activity, Save, Info, ChevronDown, ChevronUp, AlertTriangle, Filter, CalendarDays } from "lucide-react";
+import { Download, Loader2, Package, Workflow, Database, Activity, Save, Info, ChevronDown, ChevronUp, AlertTriangle, Filter, CalendarDays, RefreshCw } from "lucide-react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { exportJson } from "@/exporters/json-exporter";
 import { exportCsv } from "@/exporters/csv-exporter";
@@ -130,7 +130,7 @@ const runtimeColumns: ColumnDef<RuntimeArtifact, unknown>[] = [
 
 export default function ExtractorPage() {
   const { options, setOptions, result, isExtracting, progress, logs, setResult, setSnapshotMeta } = useExtractionStore();
-  const { extract } = useCpiExtract();
+  const { extract, refresh } = useCpiExtract();
   const [showHelp, setShowHelp] = useState(false);
 
   // Apply client-side date filter if enabled
@@ -364,6 +364,19 @@ export default function ExtractorPage() {
               {isExtracting ? "Extracting..." : "Extract"}
             </Button>
             <SnapshotLoader label="Load Snapshot" />
+            {result && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" onClick={refresh} disabled={isExtracting}>
+                    {isExtracting ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    Refresh Snapshot
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs text-xs">
+                  Fetch missing data from CPI API: downloads bundles for flows without bundle data, refreshes runtime status, and fetches missing configurations. Requires CPI connection.
+                </TooltipContent>
+              </Tooltip>
+            )}
             {result && (
               <Button variant="outline" onClick={handleSaveSnapshot}>
                 <Save className="h-4 w-4" />
