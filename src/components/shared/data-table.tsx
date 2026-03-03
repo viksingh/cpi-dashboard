@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -34,6 +34,11 @@ export function DataTable<TData>({
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState(initialFilter);
+
+  // Sync globalFilter when initialFilter changes (e.g. from URL param resolved after mount)
+  useEffect(() => {
+    if (initialFilter) setGlobalFilter(initialFilter);
+  }, [initialFilter]);
 
   const table = useReactTable({
     data,

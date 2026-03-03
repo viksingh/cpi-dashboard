@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import { useExtractionStore } from "@/stores/extraction-store";
 import { useStoreHydrated } from "@/hooks/use-store-hydration";
+import { useFlowIdFilter } from "@/hooks/use-flow-id-filter";
 import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
 import { DataTable } from "@/components/shared/data-table";
 import { ExportToolbar } from "@/components/shared/export-toolbar";
@@ -58,25 +58,14 @@ const epColumns: ColumnDef<EndpointInfo, unknown>[] = [
 ];
 
 export default function EndpointsPage() {
-  return <Suspense><EndpointsContent /></Suspense>;
-}
-
-function EndpointsContent() {
   const extractionResult = useExtractionStore((s) => s.result);
   const hydrated = useStoreHydrated();
-  const searchParams = useSearchParams();
-  const flowIdParam = searchParams.get("flowId");
+  const initialFilter = useFlowIdFilter(extractionResult);
 
   const inventory = useMemo<EndpointInventory | null>(
     () => extractionResult ? analyzeFromSnapshot(extractionResult) : null,
     [extractionResult]
   );
-
-  const initialFilter = useMemo(() => {
-    if (!flowIdParam || !extractionResult) return "";
-    const flow = extractionResult.allFlows.find((f) => f.id === flowIdParam);
-    return flow?.name ?? flowIdParam;
-  }, [flowIdParam, extractionResult]);
 
   const eccEndpoints = useMemo(
     () => inventory?.allEndpoints.filter((e) => e.eccRelated) || [],

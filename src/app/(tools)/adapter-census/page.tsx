@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import { useExtractionStore } from "@/stores/extraction-store";
 import { useStoreHydrated } from "@/hooks/use-store-hydration";
+import { useFlowIdFilter } from "@/hooks/use-flow-id-filter";
 import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
 import { DataTable } from "@/components/shared/data-table";
 import { ExportToolbar } from "@/components/shared/export-toolbar";
@@ -38,22 +38,11 @@ const columns: ColumnDef<AdapterTypeStat, unknown>[] = [
 ];
 
 export default function AdapterCensusPage() {
-  return <Suspense><AdapterCensusContent /></Suspense>;
-}
-
-function AdapterCensusContent() {
   const extractionResult = useExtractionStore((s) => s.result);
   const hydrated = useStoreHydrated();
-  const searchParams = useSearchParams();
-  const flowIdParam = searchParams.get("flowId");
+  const initialFilter = useFlowIdFilter(extractionResult);
 
   const result = useMemo(() => extractionResult ? analyzeFromSnapshot(extractionResult) : null, [extractionResult]);
-
-  const initialFilter = useMemo(() => {
-    if (!flowIdParam || !extractionResult) return "";
-    const flow = extractionResult.allFlows.find((f) => f.id === flowIdParam);
-    return flow?.name ?? flowIdParam;
-  }, [flowIdParam, extractionResult]);
 
   const eccStats = useMemo(() => result?.stats.filter((s) => s.eccRelated) || [], [result]);
 

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useExtractionStore } from "@/stores/extraction-store";
 import { useStoreHydrated } from "@/hooks/use-store-hydration";
+import { useFlowIdFilter } from "@/hooks/use-flow-id-filter";
 import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
 import { DataTable } from "@/components/shared/data-table";
 import { ExportToolbar } from "@/components/shared/export-toolbar";
@@ -48,14 +48,9 @@ const depColumns: ColumnDef<Dependency, unknown>[] = [
 ];
 
 export default function DependenciesPage() {
-  return <Suspense><DependenciesContent /></Suspense>;
-}
-
-function DependenciesContent() {
   const extractionResult = useExtractionStore((s) => s.result);
   const hydrated = useStoreHydrated();
-  const searchParams = useSearchParams();
-  const flowIdParam = searchParams.get("flowId");
+  const initialFilter = useFlowIdFilter(extractionResult);
   const [impactFlowId, setImpactFlowId] = useState("");
 
   const graph = useMemo<DependencyGraph | null>(
@@ -70,12 +65,6 @@ function DependenciesContent() {
     () => (graph && impactFlowId ? Array.from(getImpactedFlows(graph, impactFlowId)) : []),
     [graph, impactFlowId]
   );
-
-  const initialFilter = useMemo(() => {
-    if (!flowIdParam || !extractionResult) return "";
-    const flow = extractionResult.allFlows.find((f) => f.id === flowIdParam);
-    return flow?.name ?? flowIdParam;
-  }, [flowIdParam, extractionResult]);
 
   const handleExportExcel = async () => {
     if (!graph) return;
