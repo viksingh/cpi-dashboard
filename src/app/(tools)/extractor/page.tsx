@@ -24,7 +24,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { exportJson } from "@/exporters/json-exporter";
 import { exportCsv } from "@/exporters/csv-exporter";
 import { exportExcel } from "@/exporters/excel-exporter";
-import { applyDateFilter } from "@/lib/date-filter";
+import { applyDateFilter, parseDate } from "@/lib/date-filter";
 import { FilterMode, FilterModeLabels } from "@/types/cpi";
 import type { ExtractionResult, IntegrationPackage, IntegrationFlow, ValueMapping, RuntimeArtifact, ConfigRow } from "@/types/cpi";
 
@@ -67,13 +67,27 @@ const extractionOptions = [
   },
 ];
 
+function formatTimestamp(value: unknown): string {
+  if (!value || typeof value !== "string") return "";
+  const date = parseDate(value);
+  if (!date) return String(value);
+  return date.toLocaleString(undefined, {
+    year: "numeric", month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+const dateCell = (key: string) => ({
+  cell: ({ row }: { row: { getValue: (k: string) => unknown } }) => formatTimestamp(row.getValue(key)),
+});
+
 const packageColumns: ColumnDef<IntegrationPackage, unknown>[] = [
   { accessorKey: "id", header: "ID" },
   { accessorKey: "name", header: "Name" },
   { accessorKey: "version", header: "Version" },
   { accessorKey: "vendor", header: "Vendor" },
   { accessorKey: "modifiedBy", header: "Modified By" },
-  { accessorKey: "modifiedDate", header: "Modified Date" },
+  { accessorKey: "modifiedDate", header: "Modified Date", ...dateCell("modifiedDate") },
 ];
 
 const flowColumns: ColumnDef<IntegrationFlow, unknown>[] = [
@@ -84,7 +98,7 @@ const flowColumns: ColumnDef<IntegrationFlow, unknown>[] = [
   { accessorKey: "sender", header: "Sender" },
   { accessorKey: "receiver", header: "Receiver" },
   { accessorKey: "modifiedBy", header: "Modified By" },
-  { accessorKey: "modifiedAt", header: "Modified At" },
+  { accessorKey: "modifiedAt", header: "Modified At", ...dateCell("modifiedAt") },
 ];
 
 const vmColumns: ColumnDef<ValueMapping, unknown>[] = [
@@ -93,6 +107,7 @@ const vmColumns: ColumnDef<ValueMapping, unknown>[] = [
   { accessorKey: "packageId", header: "Package" },
   { accessorKey: "version", header: "Version" },
   { accessorKey: "modifiedBy", header: "Modified By" },
+  { accessorKey: "modifiedAt", header: "Modified At", ...dateCell("modifiedAt") },
 ];
 
 const runtimeColumns: ColumnDef<RuntimeArtifact, unknown>[] = [
@@ -110,6 +125,7 @@ const runtimeColumns: ColumnDef<RuntimeArtifact, unknown>[] = [
     },
   },
   { accessorKey: "deployedBy", header: "Deployed By" },
+  { accessorKey: "deployedOn", header: "Deployed On", ...dateCell("deployedOn") },
 ];
 
 export default function ExtractorPage() {
