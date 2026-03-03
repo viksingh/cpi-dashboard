@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useExtractionStore } from "@/stores/extraction-store";
 import { useStoreHydrated } from "@/hooks/use-store-hydration";
 import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
@@ -67,10 +68,22 @@ const brokenColumns: ColumnDef<BrokenLink, unknown>[] = [
 ];
 
 export default function NormalizedFlowsPage() {
+  return <Suspense><NormalizedFlowsContent /></Suspense>;
+}
+
+function NormalizedFlowsContent() {
   const extractionResult = useExtractionStore((s) => s.result);
   const hydrated = useStoreHydrated();
+  const searchParams = useSearchParams();
+  const flowIdParam = searchParams.get("flowId");
 
   const result = useMemo(() => extractionResult ? analyzeFromSnapshot(extractionResult) : null, [extractionResult]);
+
+  const initialFilter = useMemo(() => {
+    if (!flowIdParam || !extractionResult) return "";
+    const flow = extractionResult.allFlows.find((f) => f.id === flowIdParam);
+    return flow?.name ?? flowIdParam;
+  }, [flowIdParam, extractionResult]);
 
   const handleExportExcel = async () => {
     if (!result) return;
@@ -153,10 +166,10 @@ export default function NormalizedFlowsPage() {
               <TabsTrigger value="broken">Broken ({result.broken.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="chains">
-              <DataTable columns={chainColumns} data={result.chains} searchPlaceholder="Search chains..." />
+              <DataTable columns={chainColumns} data={result.chains} searchPlaceholder="Search chains..." initialFilter={initialFilter} />
             </TabsContent>
             <TabsContent value="standalone">
-              <DataTable columns={standaloneColumns} data={result.standalone} searchPlaceholder="Search standalone..." />
+              <DataTable columns={standaloneColumns} data={result.standalone} searchPlaceholder="Search standalone..." initialFilter={initialFilter} />
             </TabsContent>
             <TabsContent value="broken">
               <DataTable columns={brokenColumns} data={result.broken} searchPlaceholder="Search broken links..." />

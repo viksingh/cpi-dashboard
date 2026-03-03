@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useExtractionStore } from "@/stores/extraction-store";
 import { useStoreHydrated } from "@/hooks/use-store-hydration";
 import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
@@ -57,13 +58,25 @@ const epColumns: ColumnDef<EndpointInfo, unknown>[] = [
 ];
 
 export default function EndpointsPage() {
+  return <Suspense><EndpointsContent /></Suspense>;
+}
+
+function EndpointsContent() {
   const extractionResult = useExtractionStore((s) => s.result);
   const hydrated = useStoreHydrated();
+  const searchParams = useSearchParams();
+  const flowIdParam = searchParams.get("flowId");
 
   const inventory = useMemo<EndpointInventory | null>(
     () => extractionResult ? analyzeFromSnapshot(extractionResult) : null,
     [extractionResult]
   );
+
+  const initialFilter = useMemo(() => {
+    if (!flowIdParam || !extractionResult) return "";
+    const flow = extractionResult.allFlows.find((f) => f.id === flowIdParam);
+    return flow?.name ?? flowIdParam;
+  }, [flowIdParam, extractionResult]);
 
   const eccEndpoints = useMemo(
     () => inventory?.allEndpoints.filter((e) => e.eccRelated) || [],
@@ -156,7 +169,7 @@ export default function EndpointsPage() {
               <TabsTrigger value="scripts">Scripts ({scriptEndpoints.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="all">
-              <DataTable columns={epColumns} data={inventory.allEndpoints} searchPlaceholder="Search endpoints..." />
+              <DataTable columns={epColumns} data={inventory.allEndpoints} searchPlaceholder="Search endpoints..." initialFilter={initialFilter} />
             </TabsContent>
             <TabsContent value="ecc">
               <DataTable columns={epColumns} data={eccEndpoints} searchPlaceholder="Search ECC endpoints..." />

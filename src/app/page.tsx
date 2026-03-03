@@ -16,6 +16,7 @@ import {
   KeyRound,
   Cloud,
   BarChart3,
+  MessageSquare,
   Globe,
   BookOpen,
   Hash,
@@ -110,6 +111,13 @@ const tools = [
     description: "Breakdown of adapter types in use with ECC-specific migration effort analysis",
     icon: BarChart3,
     color: "text-indigo-500",
+  },
+  {
+    href: "/jms-queues",
+    title: "JMS Queue Inventory",
+    description: "Inventory all JMS queues with producer/consumer flows, orphan detection, and multi-producer warnings",
+    icon: MessageSquare,
+    color: "text-emerald-500",
   },
   {
     href: "/external-systems",

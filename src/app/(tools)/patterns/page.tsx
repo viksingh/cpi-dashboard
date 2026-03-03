@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useExtractionStore } from "@/stores/extraction-store";
 import { useStoreHydrated } from "@/hooks/use-store-hydration";
 import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
@@ -71,10 +72,22 @@ const columns: ColumnDef<PatternClassification, unknown>[] = [
 ];
 
 export default function PatternsPage() {
+  return <Suspense><PatternsContent /></Suspense>;
+}
+
+function PatternsContent() {
   const extractionResult = useExtractionStore((s) => s.result);
   const hydrated = useStoreHydrated();
+  const searchParams = useSearchParams();
+  const flowIdParam = searchParams.get("flowId");
 
   const result = useMemo(() => extractionResult ? analyzeFromSnapshot(extractionResult) : null, [extractionResult]);
+
+  const initialFilter = useMemo(() => {
+    if (!flowIdParam || !extractionResult) return "";
+    const flow = extractionResult.allFlows.find((f) => f.id === flowIdParam);
+    return flow?.name ?? flowIdParam;
+  }, [flowIdParam, extractionResult]);
 
   const lowConfidence = useMemo(
     () => result?.classifications.filter((c) => c.confidence < 60) || [],
@@ -169,7 +182,7 @@ export default function PatternsPage() {
               <TabsTrigger value="low">Low Confidence ({lowConfidence.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="all">
-              <DataTable columns={columns} data={result.classifications} searchPlaceholder="Search flows..." />
+              <DataTable columns={columns} data={result.classifications} searchPlaceholder="Search flows..." initialFilter={initialFilter} />
             </TabsContent>
             <TabsContent value="grouped">
               <div className="space-y-6">

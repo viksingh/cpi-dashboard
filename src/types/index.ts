@@ -18,3 +18,4 @@ export * from './param-audit';
 export * from './cert-expiry';
 export * from './health-check';
 export * from './runbook';
+export * from './jms-queue';

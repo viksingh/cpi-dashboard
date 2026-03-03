@@ -21,6 +21,7 @@ interface DataTableProps<TData> {
   searchPlaceholder?: string;
   searchColumn?: string;
   pageSize?: number;
+  initialFilter?: string;
 }
 
 export function DataTable<TData>({
@@ -29,9 +30,10 @@ export function DataTable<TData>({
   searchPlaceholder = "Search...",
   searchColumn,
   pageSize = 20,
+  initialFilter = "",
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [globalFilter, setGlobalFilter] = useState(initialFilter);
 
   const table = useReactTable({
     data,

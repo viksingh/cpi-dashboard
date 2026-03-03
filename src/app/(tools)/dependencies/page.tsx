@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useExtractionStore } from "@/stores/extraction-store";
 import { useStoreHydrated } from "@/hooks/use-store-hydration";
 import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
@@ -17,10 +19,25 @@ import { exportExcel } from "@/exporters/excel-exporter";
 import { exportGenericJson } from "@/exporters/json-exporter";
 import type { DependencyGraph, Dependency, DependencyType } from "@/types/dependency";
 import { DependencyTypeLabels } from "@/types/dependency";
+import { flowLink } from "@/lib/flow-navigation";
 
 const depColumns: ColumnDef<Dependency, unknown>[] = [
-  { accessorKey: "sourceFlowName", header: "Source Flow" },
-  { accessorKey: "targetFlowName", header: "Target Flow" },
+  {
+    accessorKey: "sourceFlowName", header: "Source Flow",
+    cell: ({ row }) => (
+      <Link href={flowLink("/normalized-flows", row.original.sourceFlowId)} className="text-primary hover:underline">
+        {row.original.sourceFlowName}
+      </Link>
+    ),
+  },
+  {
+    accessorKey: "targetFlowName", header: "Target Flow",
+    cell: ({ row }) => (
+      <Link href={flowLink("/normalized-flows", row.original.targetFlowId)} className="text-primary hover:underline">
+        {row.original.targetFlowName}
+      </Link>
+    ),
+  },
   {
     accessorKey: "type", header: "Type",
     cell: ({ row }) => <Badge variant="outline">{DependencyTypeLabels[row.original.type]}</Badge>,
@@ -31,8 +48,14 @@ const depColumns: ColumnDef<Dependency, unknown>[] = [
 ];
 
 export default function DependenciesPage() {
+  return <Suspense><DependenciesContent /></Suspense>;
+}
+
+function DependenciesContent() {
   const extractionResult = useExtractionStore((s) => s.result);
   const hydrated = useStoreHydrated();
+  const searchParams = useSearchParams();
+  const flowIdParam = searchParams.get("flowId");
   const [impactFlowId, setImpactFlowId] = useState("");
 
   const graph = useMemo<DependencyGraph | null>(
@@ -47,6 +70,12 @@ export default function DependenciesPage() {
     () => (graph && impactFlowId ? Array.from(getImpactedFlows(graph, impactFlowId)) : []),
     [graph, impactFlowId]
   );
+
+  const initialFilter = useMemo(() => {
+    if (!flowIdParam || !extractionResult) return "";
+    const flow = extractionResult.allFlows.find((f) => f.id === flowIdParam);
+    return flow?.name ?? flowIdParam;
+  }, [flowIdParam, extractionResult]);
 
   const handleExportExcel = async () => {
     if (!graph) return;
@@ -123,7 +152,7 @@ export default function DependenciesPage() {
             </TabsList>
 
             <TabsContent value="deps">
-              <DataTable columns={depColumns} data={graph.dependencies} searchPlaceholder="Search dependencies..." />
+              <DataTable columns={depColumns} data={graph.dependencies} searchPlaceholder="Search dependencies..." initialFilter={initialFilter} />
             </TabsContent>
 
             <TabsContent value="cycles">

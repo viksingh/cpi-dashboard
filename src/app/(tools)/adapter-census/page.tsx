@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useExtractionStore } from "@/stores/extraction-store";
 import { useStoreHydrated } from "@/hooks/use-store-hydration";
 import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
@@ -37,9 +38,22 @@ const columns: ColumnDef<AdapterTypeStat, unknown>[] = [
 ];
 
 export default function AdapterCensusPage() {
+  return <Suspense><AdapterCensusContent /></Suspense>;
+}
+
+function AdapterCensusContent() {
   const extractionResult = useExtractionStore((s) => s.result);
   const hydrated = useStoreHydrated();
+  const searchParams = useSearchParams();
+  const flowIdParam = searchParams.get("flowId");
+
   const result = useMemo(() => extractionResult ? analyzeFromSnapshot(extractionResult) : null, [extractionResult]);
+
+  const initialFilter = useMemo(() => {
+    if (!flowIdParam || !extractionResult) return "";
+    const flow = extractionResult.allFlows.find((f) => f.id === flowIdParam);
+    return flow?.name ?? flowIdParam;
+  }, [flowIdParam, extractionResult]);
 
   const eccStats = useMemo(() => result?.stats.filter((s) => s.eccRelated) || [], [result]);
 
@@ -76,8 +90,8 @@ export default function AdapterCensusPage() {
               <TabsTrigger value="all">All Types ({result.stats.length})</TabsTrigger>
               <TabsTrigger value="ecc">ECC ({eccStats.length})</TabsTrigger>
             </TabsList>
-            <TabsContent value="all"><DataTable columns={columns} data={result.stats} searchPlaceholder="Search adapter types..." /></TabsContent>
-            <TabsContent value="ecc"><DataTable columns={columns} data={eccStats} searchPlaceholder="Search ECC adapters..." /></TabsContent>
+            <TabsContent value="all"><DataTable columns={columns} data={result.stats} searchPlaceholder="Search adapter types..." initialFilter={initialFilter} /></TabsContent>
+            <TabsContent value="ecc"><DataTable columns={columns} data={eccStats} searchPlaceholder="Search ECC adapters..." initialFilter={initialFilter} /></TabsContent>
           </Tabs>
         </>
       )}

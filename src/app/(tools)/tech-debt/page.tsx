@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useExtractionStore } from "@/stores/extraction-store";
 import { useStoreHydrated } from "@/hooks/use-store-hydration";
 import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
@@ -16,6 +18,7 @@ import { exportExcel } from "@/exporters/excel-exporter";
 import { exportGenericJson } from "@/exporters/json-exporter";
 import type { ScoringResult, TechDebtScore, RiskLevel, DebtCategory } from "@/types/tech-debt";
 import { DebtCategoryLabels } from "@/types/tech-debt";
+import { flowLink } from "@/lib/flow-navigation";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend,
@@ -51,7 +54,14 @@ const scoreColumns: ColumnDef<TechDebtScore, unknown>[] = [
     accessorKey: "riskLevel", header: "Risk",
     cell: ({ row }) => <Badge variant={riskBadgeVariants[row.original.riskLevel]}>{row.original.riskLevel}</Badge>,
   },
-  { accessorKey: "iflowName", header: "iFlow" },
+  {
+    accessorKey: "iflowName", header: "iFlow",
+    cell: ({ row }) => (
+      <Link href={flowLink("/normalized-flows", row.original.iflowId)} className="text-primary hover:underline">
+        {row.original.iflowName}
+      </Link>
+    ),
+  },
   { accessorKey: "packageName", header: "Package" },
   { accessorKey: "ageScore", header: "Age" },
   { accessorKey: "complexityScore", header: "Complexity" },
@@ -62,11 +72,23 @@ const scoreColumns: ColumnDef<TechDebtScore, unknown>[] = [
 ];
 
 export default function TechDebtPage() {
+  return <Suspense><TechDebtContent /></Suspense>;
+}
+
+function TechDebtContent() {
   const extractionResult = useExtractionStore((s) => s.result);
   const hydrated = useStoreHydrated();
+  const searchParams = useSearchParams();
+  const flowIdParam = searchParams.get("flowId");
   const [selectedScore, setSelectedScore] = useState<TechDebtScore | null>(null);
 
   const result = useMemo(() => extractionResult ? scoreFromSnapshot(extractionResult) : null, [extractionResult]);
+
+  const initialFilter = useMemo(() => {
+    if (!flowIdParam || !extractionResult) return "";
+    const flow = extractionResult.allFlows.find((f) => f.id === flowIdParam);
+    return flow?.name ?? flowIdParam;
+  }, [flowIdParam, extractionResult]);
 
   const riskDistribution = useMemo(() => {
     if (!result) return [];
@@ -170,6 +192,7 @@ export default function TechDebtPage() {
                 columns={scoreColumns}
                 data={result.scores.slice().sort((a, b) => b.compositeScore - a.compositeScore)}
                 searchPlaceholder="Search iFlows..."
+                initialFilter={initialFilter}
               />
             </TabsContent>
 

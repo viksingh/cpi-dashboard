@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useExtractionStore } from "@/stores/extraction-store";
 import { useStoreHydrated } from "@/hooks/use-store-hydration";
 import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
@@ -51,10 +52,22 @@ const ifColumns: ColumnDef<InterfaceRecord, unknown>[] = [
 ];
 
 export default function InventoryPage() {
+  return <Suspense><InventoryContent /></Suspense>;
+}
+
+function InventoryContent() {
   const extractionResult = useExtractionStore((s) => s.result);
   const hydrated = useStoreHydrated();
+  const searchParams = useSearchParams();
+  const flowIdParam = searchParams.get("flowId");
 
   const inventory = useMemo(() => extractionResult ? analyzeFromSnapshot(extractionResult) : null, [extractionResult]);
+
+  const initialFilter = useMemo(() => {
+    if (!flowIdParam || !extractionResult) return "";
+    const flow = extractionResult.allFlows.find((f) => f.id === flowIdParam);
+    return flow?.name ?? flowIdParam;
+  }, [flowIdParam, extractionResult]);
 
   const eccInterfaces = useMemo(
     () => inventory?.allInterfaces.filter((i) => i.eccRelated) || [],
@@ -154,7 +167,7 @@ export default function InventoryPage() {
               <TabsTrigger value="pairs">System Pairs ({systemPairs.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="all">
-              <DataTable columns={ifColumns} data={inventory.allInterfaces} searchPlaceholder="Search interfaces..." />
+              <DataTable columns={ifColumns} data={inventory.allInterfaces} searchPlaceholder="Search interfaces..." initialFilter={initialFilter} />
             </TabsContent>
             <TabsContent value="ecc">
               <DataTable columns={ifColumns} data={eccInterfaces} searchPlaceholder="Search ECC interfaces..." />

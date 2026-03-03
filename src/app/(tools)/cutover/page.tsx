@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useExtractionStore } from "@/stores/extraction-store";
 import { useStoreHydrated } from "@/hooks/use-store-hydration";
 import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
@@ -15,6 +17,7 @@ import { exportExcel } from "@/exporters/excel-exporter";
 import { exportGenericJson } from "@/exporters/json-exporter";
 import type { CutoverPlan, CutoverItem, CutoverRisk } from "@/types/cutover";
 import { CutoverRiskLabels } from "@/types/cutover";
+import { flowLink } from "@/lib/flow-navigation";
 
 const riskColors: Record<CutoverRisk, string> = {
   LOW: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
@@ -31,7 +34,14 @@ const columns: ColumnDef<CutoverItem, unknown>[] = [
       return w === -1 ? <Badge variant="destructive">Circular</Badge> : <Badge variant="outline">Wave {w}</Badge>;
     },
   },
-  { accessorKey: "flowName", header: "iFlow" },
+  {
+    accessorKey: "flowName", header: "iFlow",
+    cell: ({ row }) => (
+      <Link href={flowLink("/dependencies", row.original.flowId)} className="text-primary hover:underline">
+        {row.original.flowName}
+      </Link>
+    ),
+  },
   { accessorKey: "packageName", header: "Package" },
   {
     accessorKey: "risk", header: "Risk",
@@ -66,10 +76,22 @@ const columns: ColumnDef<CutoverItem, unknown>[] = [
 ];
 
 export default function CutoverPage() {
+  return <Suspense><CutoverContent /></Suspense>;
+}
+
+function CutoverContent() {
   const extractionResult = useExtractionStore((s) => s.result);
   const hydrated = useStoreHydrated();
+  const searchParams = useSearchParams();
+  const flowIdParam = searchParams.get("flowId");
 
   const plan = useMemo(() => extractionResult ? analyzeFromSnapshot(extractionResult) : null, [extractionResult]);
+
+  const initialFilter = useMemo(() => {
+    if (!flowIdParam || !extractionResult) return "";
+    const flow = extractionResult.allFlows.find((f) => f.id === flowIdParam);
+    return flow?.name ?? flowIdParam;
+  }, [flowIdParam, extractionResult]);
 
   const allItems = useMemo(() => {
     if (!plan) return [];
@@ -185,7 +207,7 @@ export default function CutoverPage() {
               </div>
             </TabsContent>
             <TabsContent value="plan">
-              <DataTable columns={columns} data={allItems} searchPlaceholder="Search all flows..." />
+              <DataTable columns={columns} data={allItems} searchPlaceholder="Search all flows..." initialFilter={initialFilter} />
             </TabsContent>
             <TabsContent value="circular">
               {plan.circularDeps.length > 0 ? (
