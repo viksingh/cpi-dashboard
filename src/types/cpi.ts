@@ -1,5 +1,6 @@
 // ── Filter Mode ──────────────────────────────────────────────
 export enum FilterMode {
+  EXISTED_AT = 'EXISTED_AT',
   MODIFIED_SINCE = 'MODIFIED_SINCE',
   CREATED_SINCE = 'CREATED_SINCE',
   CREATED_OR_MODIFIED_SINCE = 'CREATED_OR_MODIFIED_SINCE',
@@ -7,6 +8,7 @@ export enum FilterMode {
 }
 
 export const FilterModeLabels: Record<FilterMode, string> = {
+  [FilterMode.EXISTED_AT]: 'Existed at (created before)',
   [FilterMode.MODIFIED_SINCE]: 'Modified since',
   [FilterMode.CREATED_SINCE]: 'Created since',
   [FilterMode.CREATED_OR_MODIFIED_SINCE]: 'Created or modified since',

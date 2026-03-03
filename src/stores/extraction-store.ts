@@ -65,7 +65,7 @@ const defaultOptions: ExtractionOptions = {
   extractIflowBundles: true,
   dateFilterEnabled: false,
   sinceDate: null,
-  dateFilterMode: 'MODIFIED_SINCE' as FilterMode,
+  dateFilterMode: 'EXISTED_AT' as FilterMode,
 };
 
 export const useExtractionStore = create<ExtractionState>()(
