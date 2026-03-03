@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { SnapshotLoader } from "@/components/shared/snapshot-loader";
+import { useMemo } from "react";
+import { useExtractionStore } from "@/stores/extraction-store";
+import { useStoreHydrated } from "@/hooks/use-store-hydration";
+import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
 import { DataTable } from "@/components/shared/data-table";
 import { ExportToolbar } from "@/components/shared/export-toolbar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type ColumnDef } from "@tanstack/react-table";
 import { analyzeFromSnapshot } from "@/lib/analysis/adapter-census-analyzer";
 import { exportExcel } from "@/exporters/excel-exporter";
 import { exportGenericJson } from "@/exporters/json-exporter";
-import type { ExtractionResult } from "@/types/cpi";
-import type { AdapterCensusResult, AdapterTypeStat } from "@/types/adapter-census";
+import type { AdapterTypeStat } from "@/types/adapter-census";
 
 const columns: ColumnDef<AdapterTypeStat, unknown>[] = [
   { accessorKey: "adapterType", header: "Adapter Type" },
@@ -36,9 +37,9 @@ const columns: ColumnDef<AdapterTypeStat, unknown>[] = [
 ];
 
 export default function AdapterCensusPage() {
-  const [result, setResult] = useState<AdapterCensusResult | null>(null);
-
-  const handleLoad = (data: ExtractionResult) => setResult(analyzeFromSnapshot(data));
+  const extractionResult = useExtractionStore((s) => s.result);
+  const hydrated = useStoreHydrated();
+  const result = useMemo(() => extractionResult ? analyzeFromSnapshot(extractionResult) : null, [extractionResult]);
 
   const eccStats = useMemo(() => result?.stats.filter((s) => s.eccRelated) || [], [result]);
 
@@ -60,11 +61,7 @@ export default function AdapterCensusPage() {
         <h1 className="text-2xl font-bold">Adapter Type Census</h1>
         <p className="text-muted-foreground">Breakdown of adapter types with ECC migration effort analysis</p>
       </div>
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">Load Snapshot</CardTitle>
-          <CardDescription>Load a snapshot with parsed bundles for adapter census</CardDescription></CardHeader>
-        <CardContent><SnapshotLoader onLoad={handleLoad} label="Load Snapshot for Analysis" /></CardContent>
-      </Card>
+      {hydrated && !result && <NoSnapshotPlaceholder />}
       {result && (
         <>
           <div className="grid gap-4 sm:grid-cols-4">

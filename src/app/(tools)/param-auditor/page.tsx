@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { SnapshotLoader } from "@/components/shared/snapshot-loader";
+import { useMemo } from "react";
+import { useExtractionStore } from "@/stores/extraction-store";
+import { useStoreHydrated } from "@/hooks/use-store-hydration";
+import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
 import { DataTable } from "@/components/shared/data-table";
 import { ExportToolbar } from "@/components/shared/export-toolbar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type ColumnDef } from "@tanstack/react-table";
 import { analyzeFromSnapshot } from "@/lib/analysis/param-audit-analyzer";
 import { exportExcel } from "@/exporters/excel-exporter";
 import { exportGenericJson } from "@/exporters/json-exporter";
-import type { ExtractionResult } from "@/types/cpi";
-import type { ParamAuditResult, ParamViolation } from "@/types/param-audit";
+import type { ParamViolation } from "@/types/param-audit";
 import { ParamViolationLabels } from "@/types/param-audit";
 
 const columns: ColumnDef<ParamViolation, unknown>[] = [
@@ -43,8 +44,9 @@ const columns: ColumnDef<ParamViolation, unknown>[] = [
 ];
 
 export default function ParamAuditorPage() {
-  const [result, setResult] = useState<ParamAuditResult | null>(null);
-  const handleLoad = (data: ExtractionResult) => setResult(analyzeFromSnapshot(data));
+  const extractionResult = useExtractionStore((s) => s.result);
+  const hydrated = useStoreHydrated();
+  const result = useMemo(() => extractionResult ? analyzeFromSnapshot(extractionResult) : null, [extractionResult]);
 
   const groupedByType = useMemo(() => {
     if (!result) return [];
@@ -75,9 +77,7 @@ export default function ParamAuditorPage() {
         <h1 className="text-2xl font-bold">Externalized Parameter Auditor</h1>
         <p className="text-muted-foreground">Find hardcoded URLs, IPs, credentials, and non-externalized parameters</p>
       </div>
-      <Card><CardHeader className="pb-3"><CardTitle className="text-base">Load Snapshot</CardTitle>
-        <CardDescription>Load a snapshot with parsed bundles for parameter audit</CardDescription></CardHeader>
-        <CardContent><SnapshotLoader onLoad={handleLoad} label="Load Snapshot for Analysis" /></CardContent></Card>
+      {hydrated && !result && <NoSnapshotPlaceholder />}
       {result && (
         <>
           <div className="grid gap-4 sm:grid-cols-4">

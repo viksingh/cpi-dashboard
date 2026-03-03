@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useExtractionStore } from "@/stores/extraction-store";
 import {
   LayoutDashboard,
   Download,
-  Camera,
   GitCompare,
   Network,
   MapPin,
@@ -34,8 +34,7 @@ import { Separator } from "@/components/ui/separator";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/extractor", label: "Extractor", icon: Download },
-  { href: "/snapshot", label: "Snapshot", icon: Camera },
+  { href: "/extractor", label: "Extractor & Snapshot", icon: Download },
   { href: "/diff", label: "Snapshot Diff", icon: GitCompare },
   { href: "/dependencies", label: "Dependencies", icon: Network },
   { href: "/endpoints", label: "Endpoints", icon: MapPin },
@@ -64,6 +63,7 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const flowCount = useExtractionStore((s) => s.result?.allFlows?.length ?? 0);
 
   return (
     <>
@@ -87,6 +87,15 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <X className="h-4 w-4" />
           </Button>
         </div>
+
+        {flowCount > 0 && (
+          <div className="border-b px-4 py-2">
+            <p className="text-xs text-muted-foreground">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500 mr-1" />
+              {flowCount} flows loaded
+            </p>
+          </div>
+        )}
 
         <ScrollArea className="flex-1 px-3 py-4">
           <nav className="flex flex-col gap-1">

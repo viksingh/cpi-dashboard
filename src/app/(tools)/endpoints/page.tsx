@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { SnapshotLoader } from "@/components/shared/snapshot-loader";
+import { useMemo } from "react";
+import { useExtractionStore } from "@/stores/extraction-store";
+import { useStoreHydrated } from "@/hooks/use-store-hydration";
+import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
 import { DataTable } from "@/components/shared/data-table";
 import { ExportToolbar } from "@/components/shared/export-toolbar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, AlertCircle } from "lucide-react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { analyzeFromSnapshot } from "@/lib/analysis/endpoint-analyzer";
 import { exportExcel } from "@/exporters/excel-exporter";
 import { exportGenericJson } from "@/exporters/json-exporter";
-import type { ExtractionResult } from "@/types/cpi";
 import type { EndpointInventory, EndpointInfo } from "@/types/endpoint";
 import { EndpointTypeLabels } from "@/types/endpoint";
 
@@ -57,12 +57,13 @@ const epColumns: ColumnDef<EndpointInfo, unknown>[] = [
 ];
 
 export default function EndpointsPage() {
-  const [inventory, setInventory] = useState<EndpointInventory | null>(null);
+  const extractionResult = useExtractionStore((s) => s.result);
+  const hydrated = useStoreHydrated();
 
-  const handleLoad = (data: ExtractionResult) => {
-    const result = analyzeFromSnapshot(data);
-    setInventory(result);
-  };
+  const inventory = useMemo<EndpointInventory | null>(
+    () => extractionResult ? analyzeFromSnapshot(extractionResult) : null,
+    [extractionResult]
+  );
 
   const eccEndpoints = useMemo(
     () => inventory?.allEndpoints.filter((e) => e.eccRelated) || [],
@@ -106,15 +107,7 @@ export default function EndpointsPage() {
         <p className="text-muted-foreground">Catalog endpoints, track ECC connections, and manage migration status</p>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Load Snapshot</CardTitle>
-          <CardDescription>Load a snapshot with parsed bundles for endpoint analysis</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SnapshotLoader onLoad={handleLoad} label="Load Snapshot for Analysis" />
-        </CardContent>
-      </Card>
+      {hydrated && !inventory && <NoSnapshotPlaceholder />}
 
       {inventory && (
         <>

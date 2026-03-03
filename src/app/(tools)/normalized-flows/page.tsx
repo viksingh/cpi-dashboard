@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { SnapshotLoader } from "@/components/shared/snapshot-loader";
+import { useMemo } from "react";
+import { useExtractionStore } from "@/stores/extraction-store";
+import { useStoreHydrated } from "@/hooks/use-store-hydration";
+import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
 import { DataTable } from "@/components/shared/data-table";
 import { ExportToolbar } from "@/components/shared/export-toolbar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type ColumnDef } from "@tanstack/react-table";
 import { analyzeFromSnapshot } from "@/lib/analysis/normalized-flow-analyzer";
 import { exportExcel } from "@/exporters/excel-exporter";
 import { exportGenericJson } from "@/exporters/json-exporter";
-import type { ExtractionResult } from "@/types/cpi";
 import type { NormalizedFlowResult, NormalizedFlow, FlowStep, BrokenLink } from "@/types/normalized-flow";
 
 const chainColumns: ColumnDef<NormalizedFlow, unknown>[] = [
@@ -66,11 +67,10 @@ const brokenColumns: ColumnDef<BrokenLink, unknown>[] = [
 ];
 
 export default function NormalizedFlowsPage() {
-  const [result, setResult] = useState<NormalizedFlowResult | null>(null);
+  const extractionResult = useExtractionStore((s) => s.result);
+  const hydrated = useStoreHydrated();
 
-  const handleLoad = (data: ExtractionResult) => {
-    setResult(analyzeFromSnapshot(data));
-  };
+  const result = useMemo(() => extractionResult ? analyzeFromSnapshot(extractionResult) : null, [extractionResult]);
 
   const handleExportExcel = async () => {
     if (!result) return;
@@ -110,15 +110,7 @@ export default function NormalizedFlowsPage() {
         <p className="text-muted-foreground">Concatenate JMS/ProcessDirect-chained iFlows into end-to-end logical flows</p>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Load Snapshot</CardTitle>
-          <CardDescription>Load a snapshot with parsed bundles for flow chain analysis</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SnapshotLoader onLoad={handleLoad} label="Load Snapshot for Analysis" />
-        </CardContent>
-      </Card>
+      {hydrated && !result && <NoSnapshotPlaceholder />}
 
       {result && (
         <>

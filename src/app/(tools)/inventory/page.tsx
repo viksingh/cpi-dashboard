@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { SnapshotLoader } from "@/components/shared/snapshot-loader";
+import { useMemo } from "react";
+import { useExtractionStore } from "@/stores/extraction-store";
+import { useStoreHydrated } from "@/hooks/use-store-hydration";
+import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
 import { DataTable } from "@/components/shared/data-table";
 import { ExportToolbar } from "@/components/shared/export-toolbar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type ColumnDef } from "@tanstack/react-table";
 import { analyzeFromSnapshot } from "@/lib/analysis/interface-analyzer";
 import { exportExcel } from "@/exporters/excel-exporter";
 import { exportGenericJson } from "@/exporters/json-exporter";
-import type { ExtractionResult } from "@/types/cpi";
 import type { InterfaceInventory, InterfaceRecord } from "@/types/interface-inventory";
 import { EndpointTypeLabels } from "@/types/endpoint";
 
@@ -50,12 +51,10 @@ const ifColumns: ColumnDef<InterfaceRecord, unknown>[] = [
 ];
 
 export default function InventoryPage() {
-  const [inventory, setInventory] = useState<InterfaceInventory | null>(null);
+  const extractionResult = useExtractionStore((s) => s.result);
+  const hydrated = useStoreHydrated();
 
-  const handleLoad = (data: ExtractionResult) => {
-    const result = analyzeFromSnapshot(data);
-    setInventory(result);
-  };
+  const inventory = useMemo(() => extractionResult ? analyzeFromSnapshot(extractionResult) : null, [extractionResult]);
 
   const eccInterfaces = useMemo(
     () => inventory?.allInterfaces.filter((i) => i.eccRelated) || [],
@@ -106,15 +105,7 @@ export default function InventoryPage() {
         <p className="text-muted-foreground">Source → iFlow → Target with protocol grouping and ECC classification</p>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Load Snapshot</CardTitle>
-          <CardDescription>Load a snapshot with parsed bundles for interface inventory analysis</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SnapshotLoader onLoad={handleLoad} label="Load Snapshot for Analysis" />
-        </CardContent>
-      </Card>
+      {hydrated && !inventory && <NoSnapshotPlaceholder />}
 
       {inventory && (
         <>

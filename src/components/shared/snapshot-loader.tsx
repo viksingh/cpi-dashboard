@@ -4,15 +4,19 @@ import { useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
+import { useExtractionStore } from "@/stores/extraction-store";
 import type { ExtractionResult } from "@/types/cpi";
 
 interface SnapshotLoaderProps {
-  onLoad: (result: ExtractionResult, fileName: string) => void;
+  /** Optional callback for local-only mode (e.g. diff page). When provided, data is NOT written to global store. */
+  onLoad?: (result: ExtractionResult, fileName: string) => void;
   label?: string;
 }
 
 export function SnapshotLoader({ onLoad, label = "Load Snapshot" }: SnapshotLoaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const setResult = useExtractionStore((s) => s.setResult);
+  const setSnapshotMeta = useExtractionStore((s) => s.setSnapshotMeta);
 
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,7 +37,15 @@ export function SnapshotLoader({ onLoad, label = "Load Snapshot" }: SnapshotLoad
         data.allValueMappings = data.allValueMappings || [];
         data.runtimeArtifacts = data.runtimeArtifacts || [];
 
-        onLoad(data, file.name);
+        if (onLoad) {
+          // Local-only mode (diff page)
+          onLoad(data, file.name);
+        } else {
+          // Global store mode — persists to IndexedDB
+          setResult(data);
+          setSnapshotMeta(file.name);
+        }
+
         toast.success(`Loaded snapshot: ${file.name}`);
 
         // Warn if no flows have parsed bundle data
@@ -58,7 +70,7 @@ export function SnapshotLoader({ onLoad, label = "Load Snapshot" }: SnapshotLoad
       // Reset input
       if (inputRef.current) inputRef.current.value = "";
     },
-    [onLoad]
+    [onLoad, setResult, setSnapshotMeta]
   );
 
   return (

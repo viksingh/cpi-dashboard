@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { SnapshotLoader } from "@/components/shared/snapshot-loader";
+import { useMemo } from "react";
+import { useExtractionStore } from "@/stores/extraction-store";
+import { useStoreHydrated } from "@/hooks/use-store-hydration";
+import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
 import { DataTable } from "@/components/shared/data-table";
 import { ExportToolbar } from "@/components/shared/export-toolbar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type ColumnDef } from "@tanstack/react-table";
 import { analyzeFromSnapshot } from "@/lib/analysis/cert-reference-analyzer";
 import { exportExcel } from "@/exporters/excel-exporter";
 import { exportGenericJson } from "@/exporters/json-exporter";
-import type { ExtractionResult } from "@/types/cpi";
-import type { CertReferenceResult, CertReference } from "@/types/cert-expiry";
+import type { CertReference } from "@/types/cert-expiry";
 
 const columns: ColumnDef<CertReference, unknown>[] = [
   { accessorKey: "alias", header: "Certificate Alias" },
@@ -31,8 +32,9 @@ const columns: ColumnDef<CertReference, unknown>[] = [
 ];
 
 export default function CertExpiryPage() {
-  const [result, setResult] = useState<CertReferenceResult | null>(null);
-  const handleLoad = (data: ExtractionResult) => setResult(analyzeFromSnapshot(data));
+  const extractionResult = useExtractionStore((s) => s.result);
+  const hydrated = useStoreHydrated();
+  const result = useMemo(() => extractionResult ? analyzeFromSnapshot(extractionResult) : null, [extractionResult]);
 
   const groupedByAlias = useMemo(() => {
     if (!result) return [];
@@ -61,9 +63,7 @@ export default function CertExpiryPage() {
         <h1 className="text-2xl font-bold">Certificate Expiry Monitor</h1>
         <p className="text-muted-foreground">Inventory all certificate and keystore references across iFlows</p>
       </div>
-      <Card><CardHeader className="pb-3"><CardTitle className="text-base">Load Snapshot</CardTitle>
-        <CardDescription>Load a snapshot with parsed bundles for certificate reference scanning</CardDescription></CardHeader>
-        <CardContent><SnapshotLoader onLoad={handleLoad} label="Load Snapshot for Analysis" /></CardContent></Card>
+      {hydrated && !result && <NoSnapshotPlaceholder />}
       {result && (
         <>
           <div className="grid gap-4 sm:grid-cols-4">

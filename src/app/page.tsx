@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Download,
-  Camera,
   GitCompare,
   Network,
   MapPin,
@@ -30,17 +29,10 @@ import {
 const tools = [
   {
     href: "/extractor",
-    title: "Extractor",
-    description: "Extract packages, flows, value mappings, configurations, and runtime data from SAP CPI",
+    title: "Extractor & Snapshot",
+    description: "Extract data from SAP CPI, load or save JSON snapshots for offline analysis across all tools",
     icon: Download,
     color: "text-blue-500",
-  },
-  {
-    href: "/snapshot",
-    title: "Snapshot Creator",
-    description: "Create JSON snapshots of your CPI tenant for offline analysis across all tools",
-    icon: Camera,
-    color: "text-emerald-500",
   },
   {
     href: "/diff",
@@ -217,8 +209,8 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p><strong>1. Connect</strong> — Enter your CPI tenant URL and OAuth2/Basic credentials on any tool page</p>
-          <p><strong>2. Extract</strong> — Use the Extractor or Snapshot Creator to pull data from your tenant</p>
-          <p><strong>3. Analyze</strong> — Load snapshots into Diff, Dependencies, Tech Debt, Endpoints, or Inventory tools</p>
+          <p><strong>2. Extract</strong> — Use the Extractor to pull data and save as a snapshot</p>
+          <p><strong>3. Analyze</strong> — All analysis tools automatically use the loaded snapshot — no re-loading needed</p>
           <p><strong>4. Export</strong> — Download results as Excel, CSV, or JSON for reporting and tracking</p>
         </CardContent>
       </Card>

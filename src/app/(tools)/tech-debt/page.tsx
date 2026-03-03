@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { SnapshotLoader } from "@/components/shared/snapshot-loader";
+import { useExtractionStore } from "@/stores/extraction-store";
+import { useStoreHydrated } from "@/hooks/use-store-hydration";
+import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
 import { DataTable } from "@/components/shared/data-table";
 import { ExportToolbar } from "@/components/shared/export-toolbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,7 +14,6 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { scoreFromSnapshot } from "@/lib/analysis/tech-debt-scorer";
 import { exportExcel } from "@/exporters/excel-exporter";
 import { exportGenericJson } from "@/exporters/json-exporter";
-import type { ExtractionResult } from "@/types/cpi";
 import type { ScoringResult, TechDebtScore, RiskLevel, DebtCategory } from "@/types/tech-debt";
 import { DebtCategoryLabels } from "@/types/tech-debt";
 import {
@@ -61,13 +62,11 @@ const scoreColumns: ColumnDef<TechDebtScore, unknown>[] = [
 ];
 
 export default function TechDebtPage() {
-  const [result, setResult] = useState<ScoringResult | null>(null);
+  const extractionResult = useExtractionStore((s) => s.result);
+  const hydrated = useStoreHydrated();
   const [selectedScore, setSelectedScore] = useState<TechDebtScore | null>(null);
 
-  const handleLoad = (data: ExtractionResult) => {
-    const scored = scoreFromSnapshot(data);
-    setResult(scored);
-  };
+  const result = useMemo(() => extractionResult ? scoreFromSnapshot(extractionResult) : null, [extractionResult]);
 
   const riskDistribution = useMemo(() => {
     if (!result) return [];
@@ -116,15 +115,7 @@ export default function TechDebtPage() {
         <p className="text-muted-foreground">Score iFlows on 5 technical debt categories and prioritize remediation</p>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Load Snapshot</CardTitle>
-          <CardDescription>Load a snapshot with parsed bundles for technical debt scoring</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SnapshotLoader onLoad={handleLoad} label="Load Snapshot for Scoring" />
-        </CardContent>
-      </Card>
+      {hydrated && !result && <NoSnapshotPlaceholder />}
 
       {result && (
         <>

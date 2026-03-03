@@ -1,20 +1,20 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { SnapshotLoader } from "@/components/shared/snapshot-loader";
+import { useExtractionStore } from "@/stores/extraction-store";
+import { useStoreHydrated } from "@/hooks/use-store-hydration";
+import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
 import { DataTable } from "@/components/shared/data-table";
 import { ExportToolbar } from "@/components/shared/export-toolbar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Network, AlertTriangle, Search } from "lucide-react";
+import { AlertTriangle, Search } from "lucide-react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { analyzeFromSnapshot, detectCycles, getImpactedFlows, getOrphanFlows, getDependencyCountsByType } from "@/lib/analysis/dependency-analyzer";
 import { exportExcel } from "@/exporters/excel-exporter";
 import { exportGenericJson } from "@/exporters/json-exporter";
-import type { ExtractionResult } from "@/types/cpi";
 import type { DependencyGraph, Dependency, DependencyType } from "@/types/dependency";
 import { DependencyTypeLabels } from "@/types/dependency";
 
@@ -31,13 +31,14 @@ const depColumns: ColumnDef<Dependency, unknown>[] = [
 ];
 
 export default function DependenciesPage() {
-  const [graph, setGraph] = useState<DependencyGraph | null>(null);
+  const extractionResult = useExtractionStore((s) => s.result);
+  const hydrated = useStoreHydrated();
   const [impactFlowId, setImpactFlowId] = useState("");
 
-  const handleLoad = (data: ExtractionResult) => {
-    const result = analyzeFromSnapshot(data, data.tenantUrl || "");
-    setGraph(result);
-  };
+  const graph = useMemo<DependencyGraph | null>(
+    () => extractionResult ? analyzeFromSnapshot(extractionResult, extractionResult.tenantUrl || "") : null,
+    [extractionResult]
+  );
 
   const cycles = useMemo(() => (graph ? detectCycles(graph) : []), [graph]);
   const orphans = useMemo(() => (graph ? getOrphanFlows(graph) : []), [graph]);
@@ -66,15 +67,7 @@ export default function DependenciesPage() {
         <p className="text-muted-foreground">Analyze iFlow dependencies, detect cycles, and assess impact</p>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Load Snapshot</CardTitle>
-          <CardDescription>Load a snapshot with parsed bundles for dependency analysis</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SnapshotLoader onLoad={handleLoad} label="Load Snapshot for Analysis" />
-        </CardContent>
-      </Card>
+      {hydrated && !graph && <NoSnapshotPlaceholder />}
 
       {graph && (
         <>

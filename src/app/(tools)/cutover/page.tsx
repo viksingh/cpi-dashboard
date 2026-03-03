@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { SnapshotLoader } from "@/components/shared/snapshot-loader";
+import { useMemo } from "react";
+import { useExtractionStore } from "@/stores/extraction-store";
+import { useStoreHydrated } from "@/hooks/use-store-hydration";
+import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
 import { DataTable } from "@/components/shared/data-table";
 import { ExportToolbar } from "@/components/shared/export-toolbar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type ColumnDef } from "@tanstack/react-table";
 import { analyzeFromSnapshot } from "@/lib/analysis/cutover-analyzer";
 import { exportExcel } from "@/exporters/excel-exporter";
 import { exportGenericJson } from "@/exporters/json-exporter";
-import type { ExtractionResult } from "@/types/cpi";
 import type { CutoverPlan, CutoverItem, CutoverRisk } from "@/types/cutover";
 import { CutoverRiskLabels } from "@/types/cutover";
 
@@ -65,11 +66,10 @@ const columns: ColumnDef<CutoverItem, unknown>[] = [
 ];
 
 export default function CutoverPage() {
-  const [plan, setPlan] = useState<CutoverPlan | null>(null);
+  const extractionResult = useExtractionStore((s) => s.result);
+  const hydrated = useStoreHydrated();
 
-  const handleLoad = (data: ExtractionResult) => {
-    setPlan(analyzeFromSnapshot(data));
-  };
+  const plan = useMemo(() => extractionResult ? analyzeFromSnapshot(extractionResult) : null, [extractionResult]);
 
   const allItems = useMemo(() => {
     if (!plan) return [];
@@ -115,15 +115,7 @@ export default function CutoverPage() {
         <p className="text-muted-foreground">Auto-generate sequenced migration waves from dependency graph and ECC endpoints</p>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Load Snapshot</CardTitle>
-          <CardDescription>Load a snapshot with parsed bundles for cutover planning</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SnapshotLoader onLoad={handleLoad} label="Load Snapshot for Analysis" />
-        </CardContent>
-      </Card>
+      {hydrated && !plan && <NoSnapshotPlaceholder />}
 
       {plan && (
         <>

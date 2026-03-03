@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { SnapshotLoader } from "@/components/shared/snapshot-loader";
+import { useMemo } from "react";
+import { useExtractionStore } from "@/stores/extraction-store";
+import { useStoreHydrated } from "@/hooks/use-store-hydration";
+import { NoSnapshotPlaceholder } from "@/components/shared/no-snapshot-placeholder";
 import { DataTable } from "@/components/shared/data-table";
 import { ExportToolbar } from "@/components/shared/export-toolbar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type ColumnDef } from "@tanstack/react-table";
 import { analyzeFromSnapshot } from "@/lib/analysis/external-system-analyzer";
 import { exportExcel } from "@/exporters/excel-exporter";
 import { exportGenericJson } from "@/exporters/json-exporter";
-import type { ExtractionResult } from "@/types/cpi";
-import type { ExternalSystemResult, ExternalSystem } from "@/types/external-system";
+import type { ExternalSystem } from "@/types/external-system";
 import { SystemCategoryLabels } from "@/types/external-system";
 
 const columns: ColumnDef<ExternalSystem, unknown>[] = [
@@ -38,9 +39,9 @@ const columns: ColumnDef<ExternalSystem, unknown>[] = [
 ];
 
 export default function ExternalSystemsPage() {
-  const [result, setResult] = useState<ExternalSystemResult | null>(null);
-
-  const handleLoad = (data: ExtractionResult) => setResult(analyzeFromSnapshot(data));
+  const extractionResult = useExtractionStore((s) => s.result);
+  const hydrated = useStoreHydrated();
+  const result = useMemo(() => extractionResult ? analyzeFromSnapshot(extractionResult) : null, [extractionResult]);
 
   const eccSystems = useMemo(() => result?.systems.filter((s) => s.eccRelated) || [], [result]);
 
@@ -73,11 +74,7 @@ export default function ExternalSystemsPage() {
         <h1 className="text-2xl font-bold">External System Dependency Map</h1>
         <p className="text-muted-foreground">Graph of every external system the CPI tenant connects to</p>
       </div>
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">Load Snapshot</CardTitle>
-          <CardDescription>Load a snapshot with parsed bundles for system mapping</CardDescription></CardHeader>
-        <CardContent><SnapshotLoader onLoad={handleLoad} label="Load Snapshot for Analysis" /></CardContent>
-      </Card>
+      {hydrated && !result && <NoSnapshotPlaceholder />}
       {result && (
         <>
           <div className="grid gap-4 sm:grid-cols-4">
