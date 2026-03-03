@@ -142,7 +142,7 @@ export default function ExtractorPage() {
   const bundleStats = useMemo(() => {
     if (!displayResult) return { parsed: 0, total: 0 };
     const total = displayResult.allFlows.length;
-    const parsed = displayResult.allFlows.filter((f) => f.bundleParsed && f.iflowContent).length;
+    const parsed = displayResult.allFlows.filter((f) => f.iflowContent).length;
     return { parsed, total };
   }, [displayResult]);
 

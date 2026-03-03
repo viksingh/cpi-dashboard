@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useExtractionStore } from "@/stores/extraction-store";
+import { normalizeSnapshot } from "@/lib/snapshot-normalizer";
 import type { ExtractionResult } from "@/types/cpi";
 
 interface SnapshotLoaderProps {
@@ -25,17 +26,14 @@ export function SnapshotLoader({ onLoad, label = "Load Snapshot" }: SnapshotLoad
 
       try {
         const text = await file.text();
-        const data = JSON.parse(text) as ExtractionResult;
+        const raw = JSON.parse(text) as Record<string, unknown>;
 
-        if (!data.packages && !data.allFlows) {
+        if (!raw.packages && !raw.allFlows) {
           throw new Error("Invalid snapshot format: missing packages or allFlows");
         }
 
-        // Normalize: ensure arrays exist
-        data.packages = data.packages || [];
-        data.allFlows = data.allFlows || [];
-        data.allValueMappings = data.allValueMappings || [];
-        data.runtimeArtifacts = data.runtimeArtifacts || [];
+        // Normalize PascalCase → camelCase fields (safe for already-normalized data)
+        const data = normalizeSnapshot(raw);
 
         if (onLoad) {
           // Local-only mode (diff page)
@@ -49,8 +47,8 @@ export function SnapshotLoader({ onLoad, label = "Load Snapshot" }: SnapshotLoad
         toast.success(`Loaded snapshot: ${file.name}`);
 
         // Warn if no flows have parsed bundle data
-        const totalFlows = data.allFlows?.length ?? 0;
-        const parsedBundles = data.allFlows?.filter((f) => f.bundleParsed && f.iflowContent).length ?? 0;
+        const totalFlows = data.allFlows.length;
+        const parsedBundles = data.allFlows.filter((f) => f.iflowContent).length;
         if (totalFlows > 0 && parsedBundles === 0) {
           toast.warning(
             "Snapshot has no iFlow bundle data. Analysis tools need bundles to work. Re-extract with \"iFlow Bundles\" enabled.",

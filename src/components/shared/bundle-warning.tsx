@@ -12,7 +12,7 @@ export function BundleWarning({ result }: BundleWarningProps) {
   const totalFlows = result.allFlows.length;
   if (totalFlows === 0) return null;
 
-  const parsedCount = result.allFlows.filter((f) => f.bundleParsed && f.iflowContent).length;
+  const parsedCount = result.allFlows.filter((f) => f.iflowContent).length;
   if (parsedCount > 0) return null;
 
   return (
