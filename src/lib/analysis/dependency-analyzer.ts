@@ -240,7 +240,7 @@ function analyzeProcessDirect(
     const content = contentMap.get(flow.id);
     if (!content) continue;
 
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       if (
         adapter.adapterType?.toLowerCase() === 'processdirect' &&
         adapter.direction?.toLowerCase() === 'sender'
@@ -258,7 +258,7 @@ function analyzeProcessDirect(
     const content = contentMap.get(flow.id);
     if (!content) continue;
 
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       if (
         adapter.adapterType?.toLowerCase() === 'processdirect' &&
         adapter.direction?.toLowerCase() === 'receiver'
@@ -305,7 +305,7 @@ function analyzeHttpLoopback(
     const content = contentMap.get(flow.id);
     if (!content) continue;
 
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       if (adapter.direction?.toLowerCase() !== 'receiver') continue;
       const typeLower = (adapter.adapterType ?? '').toLowerCase();
 
@@ -348,7 +348,7 @@ function analyzeSharedValueMappings(
     const content = contentMap.get(flow.id);
     if (!content) continue;
 
-    for (const mapping of content.mappings) {
+    for (const mapping of (content.mappings || [])) {
       const resourceId = mapping.resourceId;
       if (resourceId && resourceId.trim().length > 0) {
         if (!mappingToFlows.has(resourceId)) {
@@ -386,7 +386,7 @@ function analyzeSharedScripts(
     const content = contentMap.get(flow.id);
     if (!content) continue;
 
-    for (const script of content.scripts) {
+    for (const script of (content.scripts || [])) {
       const fileName = script.fileName;
       if (fileName && fileName.trim().length > 0) {
         if (!scriptToFlows.has(fileName)) {
@@ -449,7 +449,7 @@ function extractDataStoreNames(content: IFlowContent): Set<string> {
   const names = new Set<string>();
 
   // Check adapter properties
-  for (const adapter of content.adapters) {
+  for (const adapter of (content.adapters || [])) {
     const props = adapter.properties;
     if (!props) continue;
     for (const key of DATA_STORE_KEYS) {
@@ -461,7 +461,7 @@ function extractDataStoreNames(content: IFlowContent): Set<string> {
   }
 
   // Check route properties
-  for (const route of content.routes) {
+  for (const route of (content.routes || [])) {
     const props = route.properties;
     if (!props) continue;
     for (const key of DATA_STORE_KEYS) {

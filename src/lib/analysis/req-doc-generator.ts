@@ -35,8 +35,8 @@ export function analyzeFromSnapshot(result: ExtractionResult): RequirementDocRes
     let hasErrorHandling = false;
 
     if (content) {
-      const senders = content.adapters.filter((a) => a.direction?.toLowerCase() === 'sender');
-      const receivers = content.adapters.filter((a) => a.direction?.toLowerCase() === 'receiver');
+      const senders = (content.adapters || []).filter((a) => a.direction?.toLowerCase() === 'sender');
+      const receivers = (content.adapters || []).filter((a) => a.direction?.toLowerCase() === 'receiver');
 
       if (senders.length > 0 && !sourceSystem) {
         sourceSystem = senders.map((a) => a.adapterType).join(', ');
@@ -45,7 +45,7 @@ export function analyzeFromSnapshot(result: ExtractionResult): RequirementDocRes
         targetSystem = receivers.map((a) => a.adapterType).join(', ');
       }
 
-      for (const adapter of content.adapters) {
+      for (const adapter of (content.adapters || [])) {
         if (adapter.transportProtocol) protocols.push(adapter.transportProtocol);
         if (adapter.adapterType) adapterTypes.push(adapter.adapterType);
 
@@ -63,7 +63,7 @@ export function analyzeFromSnapshot(result: ExtractionResult): RequirementDocRes
         }
       }
 
-      hasErrorHandling = content.routes.some((r) =>
+      hasErrorHandling = (content.routes || []).some((r) =>
         r.type?.toLowerCase().includes('exception') ||
         r.componentType?.toLowerCase().includes('exception'));
     }
@@ -72,8 +72,8 @@ export function analyzeFromSnapshot(result: ExtractionResult): RequirementDocRes
       key: c.parameterKey, value: c.parameterValue,
     }));
 
-    const scripts = content?.scripts.map((s) => s.fileName) || [];
-    const mappings = content?.mappings.map((m) => m.name || m.mappingType) || [];
+    const scripts = (content?.scripts || []).map((s) => s.fileName) || [];
+    const mappings = (content?.mappings || []).map((m) => m.name || m.mappingType) || [];
 
     const eccRelated = eccIndicators.length > 0;
     let proposedS4State = 'No changes required - not ECC-related';

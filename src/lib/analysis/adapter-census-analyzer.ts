@@ -33,7 +33,7 @@ export function analyzeFromSnapshot(result: ExtractionResult): AdapterCensusResu
     if (!content) continue;
     flowsScanned++;
 
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       const type = adapter.adapterType || 'Unknown';
       if (!typeMap.has(type)) {
         typeMap.set(type, { count: 0, senderCount: 0, receiverCount: 0, flowIds: new Set(), flowNames: new Set() });

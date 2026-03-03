@@ -144,7 +144,7 @@ function extractFromAdapters(
   packageName: string,
 ): EndpointInfo[] {
   const endpoints: EndpointInfo[] = [];
-  for (const adapter of content.adapters) {
+  for (const adapter of (content.adapters || [])) {
     const ep: EndpointInfo = {
       endpointId: randomId(),
       iflowId: flowId,
@@ -184,7 +184,7 @@ function extractFromScripts(
 ): EndpointInfo[] {
   const endpoints: EndpointInfo[] = [];
 
-  for (const script of content.scripts) {
+  for (const script of (content.scripts || [])) {
     if (!script.content) continue;
 
     const lines = script.content.split('\n');

@@ -109,7 +109,7 @@ export function analyzeFromSnapshot(
     const rtStatus = runtimeMap.get(flow.id)?.status ?? 'NOT_DEPLOYED';
 
     // Step 1: Scan adapter properties
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       scanAdapterProperties(adapter, flow.id, flow.name, flow.packageId ?? '', pkgName, rtStatus, credentials);
     }
 
@@ -216,7 +216,7 @@ function scanScripts(
   runtimeStatus: string,
   credentials: CredentialInfo[],
 ): void {
-  for (const script of content.scripts) {
+  for (const script of (content.scripts || [])) {
     if (!script.content) continue;
 
     for (const sp of SCRIPT_PATTERNS) {
@@ -256,7 +256,7 @@ function flagEccCredentials(
   for (const flow of result.allFlows) {
     const content = flow.iflowContent;
     if (!content) continue;
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       const type = (adapter.adapterType ?? '').toLowerCase();
       if (type === 'rfc' || type.startsWith('rfc_') || type === 'idoc' || type.startsWith('idoc_')) {
         eccFlowIds.add(flow.id);

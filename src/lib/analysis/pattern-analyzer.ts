@@ -87,9 +87,9 @@ function classifyFlow(
   packageNames: Map<string, string>,
   runtimeMap: Map<string, RuntimeArtifact>,
 ): PatternClassification {
-  const adapterTypes = content.adapters.map((a) => (a.adapterType ?? '').toLowerCase());
-  const senderAdapters = content.adapters.filter((a) => a.direction?.toLowerCase() === 'sender');
-  const receiverAdapters = content.adapters.filter((a) => a.direction?.toLowerCase() === 'receiver');
+  const adapterTypes = (content.adapters || []).map((a) => (a.adapterType ?? '').toLowerCase());
+  const senderAdapters = (content.adapters || []).filter((a) => a.direction?.toLowerCase() === 'sender');
+  const receiverAdapters = (content.adapters || []).filter((a) => a.direction?.toLowerCase() === 'receiver');
 
   const hasJms = adapterTypes.some((t) => t === 'jms' || t.startsWith('jms_'));
   const hasPD = adapterTypes.some((t) => t === 'processdirect' || t === 'process_direct');
@@ -99,20 +99,20 @@ function classifyFlow(
   const hasSftp = adapterTypes.some((t) => t === 'sftp' || t.startsWith('sftp_'));
   const hasMail = adapterTypes.some((t) => t === 'mail' || t === 'imap' || t === 'smtp' || t === 'pop3');
 
-  const hasSplitter = content.routes.some(
+  const hasSplitter = (content.routes || []).some(
     (r) => r.activityType?.toLowerCase().includes('splitter') ||
            r.componentType?.toLowerCase().includes('splitter'),
   );
-  const hasAggregator = content.routes.some(
+  const hasAggregator = (content.routes || []).some(
     (r) => r.activityType?.toLowerCase().includes('aggregat') ||
            r.componentType?.toLowerCase().includes('aggregat'),
   );
-  const hasRouter = content.routes.some(
+  const hasRouter = (content.routes || []).some(
     (r) => r.activityType?.toLowerCase().includes('router') ||
            r.componentType?.toLowerCase().includes('router') ||
            r.type?.toLowerCase().includes('router'),
   );
-  const hasMulticast = content.routes.some(
+  const hasMulticast = (content.routes || []).some(
     (r) => r.activityType?.toLowerCase().includes('multicast') ||
            r.componentType?.toLowerCase().includes('multicast'),
   );
@@ -205,13 +205,13 @@ function classifyFlow(
     pattern,
     confidence,
     reasons,
-    adapterTypes: [...new Set(content.adapters.map((a) => a.adapterType ?? ''))],
+    adapterTypes: [...new Set((content.adapters || []).map((a) => a.adapterType ?? ''))],
     hasJms,
     hasProcessDirect: hasPD,
     hasTimer,
     hasSplitter,
     hasAggregator,
-    routeCount: content.routes.length,
+    routeCount: (content.routes || []).length,
     runtimeStatus: rt?.status ?? 'NOT_DEPLOYED',
   };
 }

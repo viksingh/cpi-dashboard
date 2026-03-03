@@ -33,7 +33,7 @@ export function analyzeFromSnapshot(result: ExtractionResult): ExternalSystemRes
     if (!content) continue;
     flowsScanned++;
 
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       const address = adapter.address;
       if (!address || address.trim().length === 0) continue;
       const host = extractHostname(address);
@@ -55,7 +55,7 @@ export function analyzeFromSnapshot(result: ExtractionResult): ExternalSystemRes
     }
 
     // Scan scripts for URLs
-    for (const script of content.scripts) {
+    for (const script of (content.scripts || [])) {
       if (!script.content) continue;
       URL_RE.lastIndex = 0;
       let match: RegExpExecArray | null;

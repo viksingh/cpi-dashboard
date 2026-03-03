@@ -40,7 +40,7 @@ export function analyzeFromSnapshot(result: ExtractionResult): CertReferenceResu
     const pkgName = packageNames.get(flow.packageId) ?? flow.packageId ?? '';
     const rtStatus = runtimeMap.get(flow.id)?.status ?? 'NOT_DEPLOYED';
 
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       if (!adapter.properties) continue;
       for (const key of CERT_PROPERTY_KEYS) {
         const val = adapter.properties[key];

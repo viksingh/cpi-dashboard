@@ -76,7 +76,7 @@ export function analyzeFromSnapshot(
     const content = contentMap.get(flow.id);
     if (!content) continue;
 
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       const type = (adapter.adapterType ?? '').toLowerCase();
       const direction = (adapter.direction ?? '').toLowerCase();
 
@@ -138,7 +138,7 @@ export function analyzeFromSnapshot(
     const content = contentMap.get(flow.id);
     if (!content) continue;
 
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       const type = (adapter.adapterType ?? '').toLowerCase();
       const direction = (adapter.direction ?? '').toLowerCase();
 

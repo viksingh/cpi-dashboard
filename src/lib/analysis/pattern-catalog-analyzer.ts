@@ -40,8 +40,8 @@ export function analyzeFromSnapshot(result: ExtractionResult): PatternCatalogRes
     const content = flow.iflowContent;
     if (!content) continue;
 
-    const adapters = content.adapters;
-    const routes = content.routes;
+    const adapters = content.adapters || [];
+    const routes = content.routes || [];
     const types = adapters.map((a) => (a.adapterType ?? '').toLowerCase());
     const senders = adapters.filter((a) => a.direction?.toLowerCase() === 'sender');
     const receivers = adapters.filter((a) => a.direction?.toLowerCase() === 'receiver');

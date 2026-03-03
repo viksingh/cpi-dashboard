@@ -85,7 +85,7 @@ export function analyzeFromSnapshot(
     const senderNames: string[] = [];
     const receiverNames: string[] = [];
 
-    for (const ep of content.endpoints) {
+    for (const ep of (content.endpoints || [])) {
       if (ep.role && ep.role.toLowerCase().includes('sender')) {
         if (ep.name && ep.name.trim().length > 0) {
           senderNames.push(ep.name);
@@ -106,7 +106,7 @@ export function analyzeFromSnapshot(
         ? flow.receiver
         : 'Unknown';
 
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       const direction = (adapter.direction ?? '').toLowerCase();
       const isSenderAdapter = direction.includes('sender');
 
@@ -151,7 +151,7 @@ export function analyzeFromSnapshot(
     }
 
     if (
-      content.adapters.length > 0
+      (content.adapters || []).length > 0
     ) {
       flowsWithInterfaceIds.add(flow.id);
     }

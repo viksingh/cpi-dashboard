@@ -28,7 +28,7 @@ export function analyzeFromSnapshot(result: ExtractionResult): HealthCheckResult
     const pkgName = packageNames.get(flow.packageId) ?? flow.packageId ?? '';
     const rtStatus = runtimeMap.get(flow.id)?.status ?? 'NOT_DEPLOYED';
 
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       const address = adapter.address;
       if (!address || address.trim().length === 0) continue;
 

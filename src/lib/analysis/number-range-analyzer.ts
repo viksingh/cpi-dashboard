@@ -46,7 +46,7 @@ export function analyzeFromSnapshot(result: ExtractionResult): NumberRangeScanRe
     const rtStatus = runtimeMap.get(flow.id)?.status ?? 'NOT_DEPLOYED';
 
     // Scan scripts
-    for (const script of content.scripts) {
+    for (const script of (content.scripts || [])) {
       if (!script.content) continue;
       const lines = script.content.split('\n');
       for (let i = 0; i < lines.length; i++) {
@@ -79,7 +79,7 @@ export function analyzeFromSnapshot(result: ExtractionResult): NumberRangeScanRe
     }
 
     // Scan adapter properties
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       if (!adapter.properties) continue;
       for (const [key, val] of Object.entries(adapter.properties)) {
         for (const p of NR_PATTERNS) {
@@ -95,7 +95,7 @@ export function analyzeFromSnapshot(result: ExtractionResult): NumberRangeScanRe
     }
 
     // Scan mappings
-    for (const mapping of content.mappings) {
+    for (const mapping of (content.mappings || [])) {
       const props = mapping.properties;
       if (!props) continue;
       for (const [key, val] of Object.entries(props)) {

@@ -299,14 +299,14 @@ function scoreComplexity(
     };
   }
 
-  const steps = content.routes.length;
-  const adapters = content.adapters.length;
-  const mappings = content.mappings.length;
-  const scripts = content.scripts.length;
-  const routes = content.routes.filter(
+  const steps = (content.routes || []).length;
+  const adapters = (content.adapters || []).length;
+  const mappings = (content.mappings || []).length;
+  const scripts = (content.scripts || []).length;
+  const routes = (content.routes || []).filter(
     (r) => r.type === 'sequenceFlow' || r.type === 'messageFlow',
   ).length;
-  const totalScriptLines = content.scripts.reduce((sum, s) => {
+  const totalScriptLines = (content.scripts || []).reduce((sum, s) => {
     return sum + (s.content ? s.content.split('\n').length : 0);
   }, 0);
 
@@ -391,7 +391,7 @@ function scoreMissingErrorHandling(
   let hasExceptionHandler = false;
 
   // Check routes/steps for exception handling patterns
-  for (const route of content.routes) {
+  for (const route of (content.routes || [])) {
     const type = (route.type ?? '').toLowerCase();
     const activityType = (route.activityType ?? '').toLowerCase();
     const componentType = (route.componentType ?? '').toLowerCase();
@@ -434,7 +434,7 @@ function scoreMissingErrorHandling(
   }
 
   // Check scripts for try-catch
-  for (const script of content.scripts) {
+  for (const script of (content.scripts || [])) {
     if (script.content) {
       const lower = script.content.toLowerCase();
       if (lower.includes('try') && lower.includes('catch')) {
@@ -473,7 +473,7 @@ function scoreMissingErrorHandling(
     errorScore = 100;
     findings.MISSING_ERROR_HANDLING.push('No exception subprocess found');
     findings.MISSING_ERROR_HANDLING.push('No error end event found');
-    if (content.scripts.length > 0) {
+    if ((content.scripts || []).length > 0) {
       findings.MISSING_ERROR_HANDLING.push('Scripts lack try-catch blocks');
     }
   } else if (!hasExceptionSubprocess) {
@@ -487,13 +487,13 @@ function scoreMissingErrorHandling(
     }
   } else {
     errorScore = 0;
-    if (!hasTryCatch && content.scripts.length > 0) {
+    if (!hasTryCatch && (content.scripts || []).length > 0) {
       errorScore = 20;
       findings.MISSING_ERROR_HANDLING.push('Scripts lack try-catch blocks');
     }
   }
 
-  if (!hasErrorConfig && content.adapters.length > 0) {
+  if (!hasErrorConfig && (content.adapters || []).length > 0) {
     errorScore = Math.min(100, errorScore + 10);
     findings.MISSING_ERROR_HANDLING.push(
       'No error/retry configuration in process properties',
@@ -525,7 +525,7 @@ function scoreDeprecatedAdapters(
   }
 
   let deprecatedCount = 0;
-  for (const adapter of content.adapters) {
+  for (const adapter of (content.adapters || [])) {
     const type = adapter.adapterType;
     if (!type) continue;
 
@@ -586,7 +586,7 @@ function scoreHardcodedValues(
   let hardcodedCount = 0;
 
   // Check scripts for hardcoded URLs, IPs, credentials
-  for (const script of content.scripts) {
+  for (const script of (content.scripts || [])) {
     if (!script.content) continue;
     const scriptContent = script.content;
 
@@ -626,7 +626,7 @@ function scoreHardcodedValues(
   }
 
   // Check adapter properties for hardcoded values
-  for (const adapter of content.adapters) {
+  for (const adapter of (content.adapters || [])) {
     for (const [key, value] of Object.entries(adapter.properties)) {
       if (!value) continue;
       const keyLower = key.toLowerCase();

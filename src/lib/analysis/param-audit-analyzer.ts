@@ -46,7 +46,7 @@ export function analyzeFromSnapshot(result: ExtractionResult): ParamAuditResult 
     const rtStatus = runtimeMap.get(flow.id)?.status ?? 'NOT_DEPLOYED';
 
     // Check adapter properties for non-externalized values
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       const address = adapter.address ?? '';
       if (address && !isExternalized(address) && address.startsWith('http')) {
         if (!isSafeUrl(address)) {
@@ -91,7 +91,7 @@ export function analyzeFromSnapshot(result: ExtractionResult): ParamAuditResult 
     }
 
     // Scan scripts for hardcoded values
-    for (const script of content.scripts) {
+    for (const script of (content.scripts || [])) {
       if (!script.content) continue;
       const lines = script.content.split('\n');
       for (let i = 0; i < lines.length; i++) {

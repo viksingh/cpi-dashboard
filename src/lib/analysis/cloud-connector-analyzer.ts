@@ -61,7 +61,7 @@ export function analyzeFromSnapshot(
     const content = flow.iflowContent;
     if (!content) continue;
 
-    for (const adapter of content.adapters) {
+    for (const adapter of (content.adapters || [])) {
       if (!isOnPremise(adapter)) continue;
 
       const { host, port } = extractVirtualHostPort(adapter.address);
