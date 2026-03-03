@@ -68,8 +68,8 @@ const extractionOptions = [
 ];
 
 function formatTimestamp(value: unknown): string {
-  if (!value || typeof value !== "string") return "";
-  const date = parseDate(value);
+  if (value === undefined || value === null || value === "") return "";
+  const date = parseDate(value as string | number);
   if (!date) return String(value);
   return date.toLocaleString(undefined, {
     year: "numeric", month: "short", day: "numeric",

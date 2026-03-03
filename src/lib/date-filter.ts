@@ -9,18 +9,33 @@ import { FilterMode } from '@/types/cpi';
 import type { ExtractionResult } from '@/types/cpi';
 
 /**
- * Parse a date string from SAP CPI OData or ISO 8601 format.
- * Handles: /Date(1705312200000)/, ISO 8601, plain date strings.
+ * Parse a date value from SAP CPI snapshots.
+ * Handles: plain Unix ms (number or numeric string), /Date(ms)/, ISO 8601.
  */
-export function parseDate(dateStr: string | undefined | null): Date | null {
-  if (!dateStr || dateStr.trim().length === 0) return null;
+export function parseDate(dateVal: string | number | undefined | null): Date | null {
+  if (dateVal === undefined || dateVal === null) return null;
+
+  // Plain number (Unix milliseconds)
+  if (typeof dateVal === 'number') {
+    const d = new Date(dateVal);
+    if (!isNaN(d.getTime())) return d;
+    return null;
+  }
+
+  const str = String(dateVal).trim();
+  if (str.length === 0) return null;
+
+  // Numeric string (Unix milliseconds): e.g. "1771148339487"
+  if (/^\d{10,13}$/.test(str)) {
+    return new Date(parseInt(str, 10));
+  }
 
   // SAP OData v2 format: /Date(1705312200000)/
-  const sapMatch = dateStr.match(/\/Date\((-?\d+)\)\//);
+  const sapMatch = str.match(/\/Date\((-?\d+)\)\//);
   if (sapMatch) return new Date(parseInt(sapMatch[1], 10));
 
   // Standard parsing (ISO 8601, etc.)
-  const parsed = new Date(dateStr);
+  const parsed = new Date(str);
   if (!isNaN(parsed.getTime())) return parsed;
 
   return null;
